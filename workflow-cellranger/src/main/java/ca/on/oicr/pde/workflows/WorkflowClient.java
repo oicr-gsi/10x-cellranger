@@ -1,0 +1,259 @@
+/**
+ *  Copyright (C) 2014  Ontario Institute of Cancer Research
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Contact us:
+ *
+ * Ontario Institute for Cancer Research
+ * MaRS Centre, West Tower
+ * 661 University Avenue, Suite 510
+ * Toronto, Ontario, Canada M5G 0A3
+ * Phone: 416-977-7599
+ * Toll-free: 1-866-678-6427
+ * www.oicr.on.ca
+ *
+ */
+package ca.on.oicr.pde.workflows;
+
+import ca.on.oicr.pde.utilities.workflows.OicrWorkflow;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import net.sourceforge.seqware.pipeline.workflowV2.model.Command;
+import net.sourceforge.seqware.pipeline.workflowV2.model.Job;
+import net.sourceforge.seqware.pipeline.workflowV2.model.SqwFile;
+
+/**
+ * Workflow for cellranger. See the README for more information.
+ */
+public class WorkflowClient extends OicrWorkflow {
+
+	private String binDir;
+	private String swModuleCallCellRanger;
+	private String runFolder;
+	private String flowcell;
+	private String lanes;
+	private String cellranger;
+	private String memory;
+	private String queue;
+	private Integer readEnds;
+	private String usebasesmask;
+	private String bcl2fastqpath;
+	private boolean manualOutput;
+
+	private void WorkflowClient() {
+
+		binDir = getWorkflowBaseDir() + "/bin/";
+		bcl2fastqpath = getProperty("bcl2fastq_path");
+		swModuleCallCellRanger = binDir + "sw_module_call_cellranger.pl";
+		runFolder = getProperty("run_folder");
+		flowcell = getProperty("flowcell");
+		readEnds = Integer.parseInt(getProperty("read_ends"));
+		lanes = getProperty("lanes");
+		cellranger = getProperty("cellranger");
+		memory = getProperty("memory");
+		queue = getOptionalProperty("queue", "");
+		usebasesmask = getOptionalProperty("use_bases_mask", "");
+		manualOutput = Boolean.valueOf(getOptionalProperty("manual_output", "false"));
+	}
+
+	@Override
+	public void setupDirectory() {
+
+		WorkflowClient(); // constructor hack
+	}
+
+	@Override
+	public Map<String, SqwFile> setupFiles() {
+
+		return this.getFiles();
+
+	}
+
+	@Override
+	public void buildWorkflow() {
+
+		List<ProcessEvent> ls = ProcessEvent.parseLanesString(lanes);
+
+		Job zipReportsJob = getZipJob(getFastqPath(flowcell) + "/Reports/html/", "Reports_" + flowcell + ".zip");
+		zipReportsJob.setMaxMemory(memory).setQueue(queue);
+		Job zipStatsJob = getZipJob(getFastqPath(flowcell) + "/Stats/", "Stats_" + flowcell + ".zip");
+		zipStatsJob.setMaxMemory(memory).setQueue(queue);
+
+		Job cellRangerJob = getCellRangerJob(ls);
+		cellRangerJob.setMaxMemory(memory).setQueue(queue);
+		zipReportsJob.addParent(cellRangerJob);
+		zipStatsJob.addParent(cellRangerJob);
+	}
+
+	private Job getCellRangerJob(List<ProcessEvent> ps) {
+
+		String barcodes = ProcessEvent.getBarcodesStringFromProcessEventList(ps);
+
+		// NOTE: newJob adds autoincrement counter to job name
+		Job job = newJob("ID10_CellRanger");
+		Command c = job.getCommand();
+		c.addArgument("perl").addArgument(swModuleCallCellRanger);
+		c.addArgument("--run-folder " + runFolder);
+		c.addArgument("--cellranger " + cellranger);
+		c.addArgument("--flowcell " + flowcell);
+		c.addArgument("--barcodes " + barcodes);
+		c.addArgument("--bcl2fastqpath " + bcl2fastqpath);
+		if (usebasesmask != null && !usebasesmask.isEmpty()) {
+			c.addArgument("--use-bases-mask " + usebasesmask);
+		}
+
+		// Temporary workaround until https://jira.oicr.on.ca/browse/SEQWARE-1895 is
+		// fixed
+		c.addArgument("2>stderr.log");
+
+		// for each sample sheet entry, provision out the associated fastq(s).
+		int sampleSheetRowNumber = 1;
+		for (ProcessEvent p : ps) {
+			SqwFile r1 = createOutputFile(
+					getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(), p.getBarcode(),
+							"1", p.getGroupId(), sampleSheetRowNumber),
+					// maintain file name produced by previous versions of bcl2fastq
+					generateOutputFilename(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
+							p.getBarcode(), "1", p.getGroupId()),
+					"chemical/seq-na-fastq-gzip", manualOutput);
+			r1.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
+			job.addFile(r1);
+
+			if (readEnds > 1) {
+				SqwFile r2 = createOutputFile(
+						getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
+								p.getBarcode(), "2", p.getGroupId(), sampleSheetRowNumber),
+						// maintain file name produced by previous versions of bcl2fastq
+						generateOutputFilename(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
+								p.getBarcode(), "2", p.getGroupId()),
+						"chemical/seq-na-fastq-gzip", manualOutput);
+				r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
+				job.addFile(r2);
+			}
+
+			sampleSheetRowNumber++;
+		}
+
+		for (String laneNum : ProcessEvent.getUniqueSetOfLaneNumbers(ps)) {
+			SqwFile r1 = createOutputFile(getUndeterminedFastqPath(flowcell, laneNum, "1"),
+					// maintain file name produced by previous versions of bcl2fastq
+					"lane" + laneNum + "_Undetermined_L00" + laneNum + "_R1_001.fastq.gz", "chemical/seq-na-fastq-gzip",
+					manualOutput);
+			r1.setParentAccessions(Arrays.asList(ProcessEvent.getLaneSwid(ps, laneNum)));
+			job.addFile(r1);
+			if (readEnds > 1) {
+				SqwFile r2 = createOutputFile(getUndeterminedFastqPath(flowcell, laneNum, "2"),
+						// maintain file name produced by previous versions of bcl2fastq
+						"lane" + laneNum + "_Undetermined_L00" + laneNum + "_R2_001.fastq.gz",
+						"chemical/seq-na-fastq-gzip", manualOutput);
+				r2.setParentAccessions(Arrays.asList(ProcessEvent.getLaneSwid(ps, laneNum)));
+				job.addFile(r2);
+			}
+		}
+
+		return job;
+
+	}
+
+	private Job getZipJob(String inputDirectoryPath, String outputFileName) {
+
+		String outputZipFilePath = inputDirectoryPath + "/" + outputFileName;
+
+		Job job = newJob("Create_" + outputFileName);
+
+		Command c = job.getCommand();
+		c.addArgument("cd " + inputDirectoryPath + " &&");
+		c.addArgument("zip -r");
+		c.addArgument(outputFileName);
+		c.addArgument("."); // zip all files in current directory ("inputDirectoryPath")
+
+		SqwFile f = createOutputFile(outputZipFilePath, "application/zip-report-bundle", false);
+		job.addFile(f);
+
+		return job;
+
+	}
+
+	public static String generateOutputFilename(String flowcell, String laneNum, String iusSwAccession,
+			String sampleName, String barcode, String read, String groupId) {
+		StringBuilder o = new StringBuilder();
+		o.append("SWID_");
+		o.append(iusSwAccession).append("_");
+		o.append(sampleName).append("_");
+		o.append(groupId).append("_");
+		o.append(flowcell).append("_");
+		o.append(barcode).append("_");
+		o.append("L00").append(laneNum).append("_");
+		o.append("R").append(read).append("_");
+		o.append("001.fastq.gz");
+		return o.toString();
+	}
+
+	public static String getOutputPath(String flowcell, String laneNum, String iusSwAccession, String sampleName,
+			String barcode, String read, String groupId, int sampleSheetRowNumber) {
+		StringBuilder o = new StringBuilder();
+		o.append(getFastqPath(flowcell));
+		o.append(flowcell).append("/");
+		o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
+				.append(flowcell).append("/");
+		o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
+				.append(flowcell).append("_");
+		o.append("S").append(sampleSheetRowNumber).append("_");
+		o.append("L00").append(laneNum).append("_");
+		o.append("R").append(read).append("_001.fastq.gz");
+
+		return o.toString();
+	}
+
+	public static String getUndeterminedFastqPath(String flowcell, String laneNum, String read) {
+		StringBuilder o = new StringBuilder();
+		o.append(getFastqPath(flowcell));
+		o.append("Undetermined_S0_");
+		o.append("L00").append(laneNum).append("_");
+		o.append("R").append(read).append("_001.fastq.gz");
+
+		return o.toString();
+	}
+
+	public static String getFastqPath(String flowcell) {
+		StringBuilder o = new StringBuilder();
+		o.append(flowcell).append("/outs/fastq_path/");
+
+		return o.toString();
+	}
+
+	protected SqwFile createOutputFile(String workingPath, String outputFileName, String metatype,
+			boolean manualOutput) {
+		SqwFile file = new SqwFile();
+		file.setForceCopy(true);
+		file.setIsOutput(true);
+		file.setSourcePath(workingPath);
+		file.setType(metatype);
+
+		StringBuilder builder = new StringBuilder();
+		builder.append(this.getMetadata_output_file_prefix()).append(getMetadata_output_dir()).append("/");
+		if (!manualOutput) {
+			builder.append(this.getName()).append("_").append(this.getVersion()).append("/").append(this.getRandom())
+					.append("/");
+		}
+		builder.append(outputFileName);
+
+		file.setOutputPath(builder.toString());
+
+		return file;
+	}
+
+}
