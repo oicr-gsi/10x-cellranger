@@ -1,5 +1,5 @@
 /**
- *  Copyright (C) 2014  Ontario Institute of Cancer Research
+ *  Copyright (C) 2018  Ontario Institute of Cancer Research
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -122,45 +122,45 @@ public class WorkflowClient extends OicrWorkflow {
 		// for each sample sheet entry, provision out the associated fastq(s).
 		int sampleSheetRowNumber = 1;
 		for (ProcessEvent p : ps) {
-			SqwFile r1 = createOutputFile(
-					getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(), p.getBarcode(),
-							"1", p.getGroupId(), sampleSheetRowNumber),
-					// maintain file name produced by previous versions of bcl2fastq
-					generateOutputFilename(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
-							p.getBarcode(), "1", p.getGroupId()),
-					"chemical/seq-na-fastq-gzip", manualOutput);
-			r1.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
-			job.addFile(r1);
-
-			if (readEnds > 1) {
-				SqwFile r2 = createOutputFile(
+			if (p.getBarcode().equals("NoIndex")) {
+				SqwFile r1 = createOutputFile(getUndeterminedFastqPath(flowcell, p.getLaneNumber(), "1"),
+						// maintain file name produced by previous versions of bcl2fastq
+						"lane" + p.getLaneNumber() + "_Undetermined_L00" + p.getLaneNumber() + "_R1_001.fastq.gz",
+						"chemical/seq-na-fastq-gzip", manualOutput);
+				r1.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
+				job.addFile(r1);
+				if (readEnds > 1) {
+					SqwFile r2 = createOutputFile(getUndeterminedFastqPath(flowcell, p.getLaneNumber(), "2"),
+							// maintain file name produced by previous versions of bcl2fastq
+							"lane" + p.getLaneNumber() + "_Undetermined_L00" + p.getLaneNumber() + "_R2_001.fastq.gz",
+							"chemical/seq-na-fastq-gzip", manualOutput);
+					r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
+					job.addFile(r2);
+				}
+			} else {
+				SqwFile r1 = createOutputFile(
 						getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
-								p.getBarcode(), "2", p.getGroupId(), sampleSheetRowNumber),
+								p.getBarcode(), "1", p.getGroupId(), sampleSheetRowNumber),
 						// maintain file name produced by previous versions of bcl2fastq
 						generateOutputFilename(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
-								p.getBarcode(), "2", p.getGroupId()),
+								p.getBarcode(), "1", p.getGroupId()),
 						"chemical/seq-na-fastq-gzip", manualOutput);
-				r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
-				job.addFile(r2);
-			}
+				r1.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
+				job.addFile(r1);
 
-			sampleSheetRowNumber++;
-		}
+				if (readEnds > 1) {
+					SqwFile r2 = createOutputFile(
+							getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
+									p.getBarcode(), "2", p.getGroupId(), sampleSheetRowNumber),
+							// maintain file name produced by previous versions of bcl2fastq
+							generateOutputFilename(flowcell, p.getLaneNumber(), p.getIusSwAccession(),
+									p.getSampleName(), p.getBarcode(), "2", p.getGroupId()),
+							"chemical/seq-na-fastq-gzip", manualOutput);
+					r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
+					job.addFile(r2);
+				}
 
-		for (String laneNum : ProcessEvent.getUniqueSetOfLaneNumbers(ps)) {
-			SqwFile r1 = createOutputFile(getUndeterminedFastqPath(flowcell, laneNum, "1"),
-					// maintain file name produced by previous versions of bcl2fastq
-					"lane" + laneNum + "_Undetermined_L00" + laneNum + "_R1_001.fastq.gz", "chemical/seq-na-fastq-gzip",
-					manualOutput);
-			r1.setParentAccessions(Arrays.asList(ProcessEvent.getLaneSwid(ps, laneNum)));
-			job.addFile(r1);
-			if (readEnds > 1) {
-				SqwFile r2 = createOutputFile(getUndeterminedFastqPath(flowcell, laneNum, "2"),
-						// maintain file name produced by previous versions of bcl2fastq
-						"lane" + laneNum + "_Undetermined_L00" + laneNum + "_R2_001.fastq.gz",
-						"chemical/seq-na-fastq-gzip", manualOutput);
-				r2.setParentAccessions(Arrays.asList(ProcessEvent.getLaneSwid(ps, laneNum)));
-				job.addFile(r2);
+				sampleSheetRowNumber++;
 			}
 		}
 

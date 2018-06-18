@@ -30,8 +30,6 @@ package ca.on.oicr.pde.workflows;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Holds all of the information for a particular IUS, including the lane number
@@ -44,16 +42,13 @@ import java.util.TreeSet;
 public class ProcessEvent {
 
 	private final String laneNumber;
-	private final String laneSwAccession;
 	private final String barcode;
 	private final String iusSwAccession;
 	private final String sampleName;
 	private final String groupId;
 
-	public ProcessEvent(String laneNumber, String laneSwAccession, String barcode, String iusSwAccession,
-			String sampleName, String groupId) {
+	public ProcessEvent(String laneNumber, String barcode, String iusSwAccession, String sampleName, String groupId) {
 		this.laneNumber = laneNumber;
-		this.laneSwAccession = laneSwAccession;
 		this.barcode = barcode;
 		this.iusSwAccession = iusSwAccession;
 		this.sampleName = sampleName;
@@ -62,10 +57,6 @@ public class ProcessEvent {
 
 	public String getLaneNumber() {
 		return laneNumber;
-	}
-
-	public String getLaneSwAccession() {
-		return laneSwAccession;
 	}
 
 	public String getBarcode() {
@@ -86,8 +77,7 @@ public class ProcessEvent {
 
 	@Override
 	public String toString() {
-		return String.format("[%s, %s, %s, %s, %s, %s]", laneNumber, laneSwAccession, barcode, iusSwAccession,
-				sampleName, groupId);
+		return String.format("[%s, %s, %s, %s, %s]", laneNumber, barcode, iusSwAccession, sampleName, groupId);
 	}
 
 	public static List<ProcessEvent> parseLanesString(String lanes) {
@@ -95,41 +85,11 @@ public class ProcessEvent {
 		for (String b : Arrays.asList(lanes.split("\\+"))) {
 			String[] barcodeAttrs = b.split(",");
 			String laneNumber = barcodeAttrs[0];
-			String laneSwAccession = barcodeAttrs[1];
-			String barcode = barcodeAttrs[2];
-			String iusSwAccession = barcodeAttrs[3];
-			String sampleName = barcodeAttrs[4];
-			String groupId = "NoGroup";
-			if (barcodeAttrs.length > 5) {
-				groupId = barcodeAttrs[5];
-			}
-			result.add(new ProcessEvent(laneNumber, laneSwAccession, barcode, iusSwAccession, sampleName, groupId));
-		}
-		return result;
-	}
-
-	/**
-	 * Uniquifies and sorts the lane numbers in a list of ProcessEvents.
-	 * 
-	 * @return an ordered array of unique lane numbers.
-	 **/
-	public static List<String> getUniqueSetOfLaneNumbers(List<ProcessEvent> ps) {
-		Set<String> laneNumbers = new TreeSet<String>(); // treeset = sorted + distinct elements
-		for (ProcessEvent p : ps) {
-			laneNumbers.add(p.getLaneNumber());
-		}
-		return new ArrayList<String>(laneNumbers);
-	}
-
-	/**
-	 * Returns all of the ProcessEvents for a single lane number.
-	 */
-	public static List<ProcessEvent> getProcessEventListFromLaneNumber(List<ProcessEvent> ps, String laneNumber) {
-		List<ProcessEvent> result = new ArrayList<ProcessEvent>();
-		for (ProcessEvent p : ps) {
-			if (p.getLaneNumber().equals(laneNumber)) {
-				result.add(p);
-			}
+			String barcode = barcodeAttrs[1];
+			String iusSwAccession = barcodeAttrs[2];
+			String sampleName = barcodeAttrs.length > 3 ? barcodeAttrs[3] : "";
+			String groupId = barcodeAttrs.length > 4 ? barcodeAttrs[4] : "NoGroup";
+			result.add(new ProcessEvent(laneNumber, barcode, iusSwAccession, sampleName, groupId));
 		}
 		return result;
 	}
@@ -137,24 +97,14 @@ public class ProcessEvent {
 	public static String getBarcodesStringFromProcessEventList(List<ProcessEvent> ps) {
 		StringBuilder sb = new StringBuilder();
 		for (ProcessEvent p : ps) {
+			if (p.getBarcode().equals("NoIndex"))
+				continue;
 			sb.append(p.getLaneNumber()).append(",").append(p.getBarcode()).append(",").append(p.getIusSwAccession())
 					.append(",").append(p.getSampleName()).append("_").append(p.getGroupId());
 			sb.append("+");
 		}
 		sb.deleteCharAt(sb.length() - 1);
 		return sb.toString();
-	}
-
-	public static String getLaneSwid(List<ProcessEvent> ps, String laneNumber) {
-
-		for (ProcessEvent p : ps) {
-			if (p.getLaneNumber().equals(laneNumber)) {
-				return p.laneSwAccession;
-			}
-		}
-
-		return null;
-
 	}
 
 	public static boolean containsBarcode(List<ProcessEvent> ps, String barcode) {
