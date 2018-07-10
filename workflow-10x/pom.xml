@@ -8,12 +8,12 @@
     <relativePath/>
   </parent>
   <groupId>ca.on.oicr.pde.workflows</groupId>
-  <artifactId>CellRanger</artifactId>
+  <artifactId>10X</artifactId>
   <version>0.0.1</version>
   <packaging>jar</packaging>
   <name>${display-name}</name>
   <properties>
-    <workflow-name>CellRanger</workflow-name>
+    <workflow-name>10X</workflow-name>
     <bcl2fastqpath>/.mounts/labs/PDE/public/resources/bcl2fastq_2.20.0.422/usr/local/bin/</bcl2fastqpath>
     <cellranger-bin>/oicr/local/analysis/sw-deb8/cellranger/cellranger-2.1.1/cellranger</cellranger-bin>
   </properties>
