@@ -9,7 +9,7 @@
   </parent>
   <groupId>ca.on.oicr.pde.workflows</groupId>
   <artifactId>10X</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>${display-name}</name>
   <properties>
