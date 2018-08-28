@@ -86,6 +86,11 @@ foreach my $barcode_record (@barcode_arr) {
 }
 close OUT;
 
+my $lockFile = "${flowcell}/_lock";
+if ( -e $lockFile ) {
+    unlink $lockFile;
+}
+
 my $cmd =
   "$cellranger mkfastq --run $run_folder --csv metadata_${flowcell}.csv";
 if ( $usebasesmask && $usebasesmask ne "" ) {
