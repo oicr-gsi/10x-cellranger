@@ -50,8 +50,11 @@ use Getopt::Long;
 #
 ##########
 
-my ( $run_folder, $flowcell, $lane, $barcodes, $cellranger, $usebasesmask,
-    $bcl2fastqpath, $help );
+my (
+    $run_folder,    $flowcell,   $lane,
+    $barcodes,      $cellranger, $usebasesmask,
+    $bcl2fastqpath, $memory,     $help
+);
 $help = 0;
 my $argSize      = scalar(@ARGV);
 my $getOptResult = GetOptions(
@@ -61,6 +64,7 @@ my $getOptResult = GetOptions(
     'barcodes=s'      => \$barcodes,
     'usebasesmask=s'  => \$usebasesmask,
     'bcl2fastqpath=s' => \$bcl2fastqpath,
+    'memory=i'        => \$memory,
     'help'            => \$help
 );
 usage() if ( !$getOptResult || $help );
@@ -92,7 +96,7 @@ if ( -e $lockFile ) {
 }
 
 my $cmd =
-  "$cellranger mkfastq --run $run_folder --csv metadata_${flowcell}.csv";
+"$cellranger mkfastq --localcores=1 --localmem=$memory --run $run_folder --csv metadata_${flowcell}.csv";
 if ( $usebasesmask && $usebasesmask ne "" ) {
     $cmd .= " --use-bases-mask $usebasesmask";
 }
@@ -108,7 +112,7 @@ exit(0);
 sub usage {
     print "Unknown option: @_\n" if (@_);
     print
-"usage: sw_module_call_cellranger.pl --run-folder IlluminaRunFolder --cellranger path_to_cellranger --flowcell flowcell_name --barcodes 1,AATC,121212+1,AATG,1238291 [[--help|-?]\n";
+"usage: sw_module_call_cellranger.pl --run-folder IlluminaRunFolder --cellranger path_to_cellranger --flowcell flowcell_name --barcodes 1,AATC,121212+1,AATG,1238291 --memory mem_in_gb [[--help|-?]\n";
     exit(1);
 }
 

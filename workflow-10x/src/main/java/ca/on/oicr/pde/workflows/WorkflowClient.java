@@ -111,6 +111,7 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("--flowcell " + flowcell);
 		c.addArgument("--barcodes " + barcodes);
 		c.addArgument("--bcl2fastqpath " + bcl2fastqpath);
+		c.addArgument("--memory " + (Integer.parseInt(memory) * 80 / 10240));
 		if (usebasesmask != null && !usebasesmask.isEmpty()) {
 			c.addArgument("--use-bases-mask " + usebasesmask);
 		}
