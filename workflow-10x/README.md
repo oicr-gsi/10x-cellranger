@@ -46,7 +46,7 @@ Optional:
 #### Lanes
 The `lanes` parameter defines the lanes and barcodes for the sequencer run. Only entities mentioned in this string will be split into fastq files. All other reads will end up in the Undetermined_indices folder.
 
-Format: `<lane_number_[1-8]>,<lane_sw_accession>:<barcode|NoIndex>,<sw_accession_for_parent>,<sample_name>[,<group_id>]+<barcode|NoIndex>,<sw_accession_for_parent>,<sample_name>[,<group_id>]|...`
+Format: `<lane_number_[1-8]>,<lane_sw_accession>,<barcode|NoIndex>,<sw_accession_for_parent>,<sample_name>[,<group_id>]+<lane_number_[1-8]>,<barcode|NoIndex>,<sw_accession_for_parent>,<sample_name>[,<group_id>]|...`
 
 * lane_number: the lane number in the flowcell (1-8)
 * lane_sw_accession: the SeqWare accession of the lane in the MetaDB
@@ -55,7 +55,7 @@ Format: `<lane_number_[1-8]>,<lane_sw_accession>:<barcode|NoIndex>,<sw_accession
 * sample_name : the human-readable name of the sample
 * group_id : an optional identifier that further classifies a sample, for example into a experimental group
 
-Example: `1,8291:NoIndex,192939,PCSI_0106_Ly_R_PE_190_WG+SI-GA-C10,198594,PCSI_0106_Ly_R_PE_190_WG,group1` : lane 1 (accession 8291) has two samples: an unbarcoded sample (NoIndex, accession 192939) named PCSI_0106_Ly_R_PE_190_WG and a barcoded sample (SI-GA-C10 accession 198594) named PCSI_0106_Ly_R_PE_190_WG in group 1.
+Example: `1,NoIndex,192939,,+1,SI-GA-C10,198594,PCSI_0106_Ly_R_PE_190_WG,group1`: the lane 1 itself (accession 192939) and a sample `PCSI_0106_Ly_R_PE_190_WG` (barcoded SI-GA-C10 accession 198594) named `PCSI_0106_Ly_R_PE_190_WG` in group id 1.
 
 The accessions are required because they link the fastq files with a lane, IUS and sample so that subsequent analysis can be automated for the named samples.
 
