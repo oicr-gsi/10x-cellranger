@@ -47,7 +47,9 @@ public class WorkflowClient extends OicrWorkflow {
 	private String lanes;
 	private String cellranger;
 	private String memory;
+	private String packagerMemory;
 	private String queue;
+	private Integer sheetVersion;
 	private Integer readEnds;
 	private String usebasesmask;
 	private String bcl2fastqpath;
@@ -63,7 +65,9 @@ public class WorkflowClient extends OicrWorkflow {
 		readEnds = Integer.parseInt(getProperty("read_ends"));
 		lanes = getProperty("lanes");
 		cellranger = getProperty("cellranger");
+		sheetVersion = Integer.parseInt(getProperty("sample_sheet_version"));
 		memory = getProperty("memory");
+		packagerMemory = getProperty("packager_memory");
 		queue = getOptionalProperty("queue", "");
 		usebasesmask = getOptionalProperty("use_bases_mask", "");
 		manualOutput = Boolean.valueOf(getOptionalProperty("manual_output", "false"));
@@ -88,9 +92,9 @@ public class WorkflowClient extends OicrWorkflow {
 		List<ProcessEvent> ls = ProcessEvent.parseLanesString(lanes);
 
 		Job zipReportsJob = getZipJob(getFastqPath(flowcell) + "/Reports/html/", "Reports_" + flowcell + ".zip");
-		zipReportsJob.setMaxMemory(memory).setQueue(queue);
+		zipReportsJob.setMaxMemory(packagerMemory).setQueue(queue);
 		Job zipStatsJob = getZipJob(getFastqPath(flowcell) + "/Stats/", "Stats_" + flowcell + ".zip");
-		zipStatsJob.setMaxMemory(memory).setQueue(queue);
+		zipStatsJob.setMaxMemory(packagerMemory).setQueue(queue);
 
 		Job cellRangerJob = getCellRangerJob(ls);
 		cellRangerJob.setMaxMemory(memory).setQueue(queue);
@@ -110,6 +114,7 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("--cellranger " + cellranger);
 		c.addArgument("--flowcell " + flowcell);
 		c.addArgument("--barcodes " + barcodes);
+		c.addArgument("--sheet-version " + sheetVersion);
 		c.addArgument("--bcl2fastqpath " + bcl2fastqpath);
 		c.addArgument("--memory " + (Integer.parseInt(memory) * 80 / 10240));
 		if (usebasesmask != null && !usebasesmask.isEmpty()) {

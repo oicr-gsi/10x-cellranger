@@ -53,7 +53,7 @@ use Getopt::Long;
 my (
     $run_folder,    $flowcell,   $lane,
     $barcodes,      $cellranger, $usebasesmask,
-    $bcl2fastqpath, $memory,     $help
+    $bcl2fastqpath, $sample_sheet_version, $memory,     $help
 );
 $help = 0;
 my $argSize      = scalar(@ARGV);
@@ -64,6 +64,7 @@ my $getOptResult = GetOptions(
     'barcodes=s'      => \$barcodes,
     'usebasesmask=s'  => \$usebasesmask,
     'bcl2fastqpath=s' => \$bcl2fastqpath,
+    'sheet-version=i'    => \$sample_sheet_version,
     'memory=i'        => \$memory,
     'help'            => \$help
 );
@@ -77,6 +78,9 @@ usage()
 
 open OUT, ">metadata_${flowcell}.csv"
   or die "Can't open file metadata_${flowcell}.csv";
+if ($sample_sheet_version == 1) {
+print OUT "[Data]\n";
+}
 print OUT "Lane,Sample,Index\n";
 my @barcode_arr = split /\+/, $barcodes;
 foreach my $barcode_record (@barcode_arr) {

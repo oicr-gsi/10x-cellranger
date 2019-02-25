@@ -17,6 +17,24 @@
                 "read_ends": "2",
                 "run_folder": "/.mounts/labs/gsiprojects/gsi/10XSingleCell/test_run/cellranger-tiny-bcl-1.2.0",
                 "memory": "110000",
+                "packager_memory": "4096",
+                "sample_sheet_version": "0",
+                "manual_output": "true"
+            }
+        },
+        {
+            "id": "10X_tiny_hiseq_301_test",
+            "description": "HiSeq small BCL test from 10X",
+            "parameters": {
+                "bcl2fastq_path": "/.mounts/labs/PDE/public/resources/bcl2fastq_2.20.0.422/usr/local/bin",
+                "cellranger": "/oicr/local/analysis/sw-deb8/cellranger/cellranger-3.0.1/cellranger",
+                "flowcell": "H35KCBCXY",
+                "lanes": "1,NoIndex,99,+1,SI-P03-C9,100,test_sample",
+                "read_ends": "2",
+                "run_folder": "/.mounts/labs/gsiprojects/gsi/10XSingleCell/test_run/cellranger-tiny-bcl-1.2.0",
+                "memory": "110000",
+                "packager_memory": "4096",
+                "sample_sheet_version": "0",
                 "manual_output": "true"
             }
         }

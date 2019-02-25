@@ -33,15 +33,19 @@ Required:
                                           run. See the documentation for more information
     flowcell                  string      Name of the flowcell (i.e. sequencer run)
     read_ends                 int         Number of ends [2]
-    bcl2fastq_path             string      The path to the directory containing the bcl2fastq binary
+    bcl2fastq_path            string      The path to the directory containing the bcl2fastq binary
+    sample_sheet_version      int         The version of the sample sheet
     cellranger                string      The path to the Cell Ranger binary
-
-Optional:
-
     use_bases_mask            string      Appends the value of --use_bases_mask and the given 
     queue                     string      Name of the (SGE) queue to schedule to [production]
-    memory                    int         Amount of memory given to the node on the cluster,
-                                          in MB [4000]
+    memory                    int         Amount of memory given to the main Cell Ranger job on the cluster
+    packager_memory           int         Amount of memory given to the miscellaneous jobs on the cluster
+
+#### Sample Sheet Version
+Different versions of Cell Ranger take different versions of the sample sheet:
+
+- `0`: just a simple CSV
+- `1`: the INI-CSV hybrid where the samples are in a `[Data]` section
 
 #### Lanes
 The `lanes` parameter defines the lanes and barcodes for the sequencer run. Only entities mentioned in this string will be split into fastq files. All other reads will end up in the Undetermined_indices folder.
