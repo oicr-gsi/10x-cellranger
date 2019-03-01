@@ -186,7 +186,7 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument(outputFileName);
 		c.addArgument("."); // zip all files in current directory ("inputDirectoryPath")
 
-		SqwFile f = createOutputFile(outputZipFilePath, "application/zip-report-bundle", false);
+		SqwFile f = createOutputFile(outputZipFilePath, "application/zip-report-bundle", manualOutput);
 		job.addFile(f);
 
 		return job;

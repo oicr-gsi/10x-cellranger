@@ -51,9 +51,10 @@ use Getopt::Long;
 ##########
 
 my (
-    $run_folder,    $flowcell,   $lane,
-    $barcodes,      $cellranger, $usebasesmask,
-    $bcl2fastqpath, $sample_sheet_version, $memory,     $help
+    $run_folder,    $flowcell,             $lane,
+    $barcodes,      $cellranger,           $usebasesmask,
+    $bcl2fastqpath, $sample_sheet_version, $memory,
+    $help
 );
 $help = 0;
 my $argSize      = scalar(@ARGV);
@@ -64,7 +65,7 @@ my $getOptResult = GetOptions(
     'barcodes=s'      => \$barcodes,
     'usebasesmask=s'  => \$usebasesmask,
     'bcl2fastqpath=s' => \$bcl2fastqpath,
-    'sheet-version=i'    => \$sample_sheet_version,
+    'sheet-version=i' => \$sample_sheet_version,
     'memory=i'        => \$memory,
     'help'            => \$help
 );
@@ -78,10 +79,14 @@ usage()
 
 open OUT, ">metadata_${flowcell}.csv"
   or die "Can't open file metadata_${flowcell}.csv";
-if ($sample_sheet_version == 1) {
-print OUT "[Data]\n";
+if ( $sample_sheet_version == 1 ) {
+    print OUT "[Data]\n";
 }
-print OUT "Lane,Sample,Index\n";
+print OUT "Lane,Sample,Index";
+if ( $sample_sheet_version == 1 ) {
+    print OUT ",Sample_project";
+}
+print OUT "\n";
 my @barcode_arr = split /\+/, $barcodes;
 foreach my $barcode_record (@barcode_arr) {
     my @barcode_record_arr = split /,/, $barcode_record;
@@ -90,7 +95,11 @@ foreach my $barcode_record (@barcode_arr) {
     my $ius_accession      = $barcode_record_arr[2];
     my $ius_ass_sample_str = $barcode_record_arr[3];
     my $sample_id = "SWID_$ius_accession\_$ius_ass_sample_str\_$flowcell";
-    print OUT "$lane,$sample_id,$barcode\n";
+    print OUT "$lane,$sample_id,$barcode";
+    if ( $sample_sheet_version == 1 ) {
+        print OUT ",";
+    }
+    print OUT "\n";
 }
 close OUT;
 
