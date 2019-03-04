@@ -31,7 +31,8 @@ Required:
     run_folder                dir         Sequencer run directory
     lanes                     string      Defines the lanes and barcodes for the sequencer
                                           run. See the documentation for more information
-    flowcell                  string      Name of the flowcell (i.e. sequencer run)
+    flowcell                  string      Name of the flowcell
+    run_name                  string      Name of the sequencer run (i.e. sequencer run)
     read_ends                 int         Number of ends [2]
     bcl2fastq_path            string      The path to the directory containing the bcl2fastq binary
     sample_sheet_version      int         The version of the sample sheet

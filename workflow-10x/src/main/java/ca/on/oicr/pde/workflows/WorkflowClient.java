@@ -31,6 +31,7 @@ import ca.on.oicr.pde.utilities.workflows.OicrWorkflow;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import net.sourceforge.seqware.pipeline.workflowV2.model.Command;
 import net.sourceforge.seqware.pipeline.workflowV2.model.Job;
 import net.sourceforge.seqware.pipeline.workflowV2.model.SqwFile;
@@ -46,6 +47,7 @@ public class WorkflowClient extends OicrWorkflow {
 	private String flowcell;
 	private String lanes;
 	private String cellranger;
+	private String runName;
 	private String memory;
 	private String packagerMemory;
 	private String queue;
@@ -66,6 +68,7 @@ public class WorkflowClient extends OicrWorkflow {
 		lanes = getProperty("lanes");
 		cellranger = getProperty("cellranger");
 		sheetVersion = Integer.parseInt(getProperty("sample_sheet_version"));
+		runName = getProperty("run_name");
 		memory = getProperty("memory");
 		packagerMemory = getProperty("packager_memory");
 		queue = getOptionalProperty("queue", "");
@@ -91,9 +94,11 @@ public class WorkflowClient extends OicrWorkflow {
 
 		List<ProcessEvent> ls = ProcessEvent.parseLanesString(lanes);
 
-		Job zipReportsJob = getZipJob(getFastqPath(flowcell) + "/Reports/html/", "Reports_" + flowcell + ".zip");
+		final String lane = ls.stream().map(ProcessEvent::getLaneNumber).distinct().sorted().collect(Collectors.joining("_"));
+
+		Job zipReportsJob = getZipJob(getFastqPath(flowcell) + "/Reports/html/", "Reports_" + runName + "_" + lane  + ".zip");
 		zipReportsJob.setMaxMemory(packagerMemory).setQueue(queue);
-		Job zipStatsJob = getZipJob(getFastqPath(flowcell) + "/Stats/", "Stats_" + flowcell + ".zip");
+		Job zipStatsJob = getZipJob(getFastqPath(flowcell) + "/Stats/", "Stats_" + runName + "_" + lane  + ".zip");
 		zipStatsJob.setMaxMemory(packagerMemory).setQueue(queue);
 
 		Job cellRangerJob = getCellRangerJob(ls);
@@ -130,14 +135,12 @@ public class WorkflowClient extends OicrWorkflow {
 		for (ProcessEvent p : ps) {
 			if (p.getBarcode().equals("NoIndex")) {
 				SqwFile r1 = createOutputFile(getUndeterminedFastqPath(flowcell, p.getLaneNumber(), "1"),
-						// maintain file name produced by previous versions of bcl2fastq
 						"lane" + p.getLaneNumber() + "_Undetermined_L00" + p.getLaneNumber() + "_R1_001.fastq.gz",
 						"chemical/seq-na-fastq-gzip", manualOutput);
 				r1.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
 				job.addFile(r1);
 				if (readEnds > 1) {
 					SqwFile r2 = createOutputFile(getUndeterminedFastqPath(flowcell, p.getLaneNumber(), "2"),
-							// maintain file name produced by previous versions of bcl2fastq
 							"lane" + p.getLaneNumber() + "_Undetermined_L00" + p.getLaneNumber() + "_R2_001.fastq.gz",
 							"chemical/seq-na-fastq-gzip", manualOutput);
 					r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
@@ -147,8 +150,7 @@ public class WorkflowClient extends OicrWorkflow {
 				SqwFile r1 = createOutputFile(
 						getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
 								p.getBarcode(), "1", p.getGroupId(), sampleSheetRowNumber),
-						// maintain file name produced by previous versions of bcl2fastq
-						generateOutputFilename(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
+						generateOutputFilename(runName, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
 								p.getBarcode(), "1", p.getGroupId()),
 						"chemical/seq-na-fastq-gzip", manualOutput);
 				r1.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
@@ -158,8 +160,7 @@ public class WorkflowClient extends OicrWorkflow {
 					SqwFile r2 = createOutputFile(
 							getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
 									p.getBarcode(), "2", p.getGroupId(), sampleSheetRowNumber),
-							// maintain file name produced by previous versions of bcl2fastq
-							generateOutputFilename(flowcell, p.getLaneNumber(), p.getIusSwAccession(),
+							generateOutputFilename(runName, p.getLaneNumber(), p.getIusSwAccession(),
 									p.getSampleName(), p.getBarcode(), "2", p.getGroupId()),
 							"chemical/seq-na-fastq-gzip", manualOutput);
 					r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
@@ -193,14 +194,14 @@ public class WorkflowClient extends OicrWorkflow {
 
 	}
 
-	public static String generateOutputFilename(String flowcell, String laneNum, String iusSwAccession,
+	public static String generateOutputFilename(String runName, String laneNum, String iusSwAccession,
 			String sampleName, String barcode, String read, String groupId) {
 		StringBuilder o = new StringBuilder();
 		o.append("SWID_");
 		o.append(iusSwAccession).append("_");
 		o.append(sampleName).append("_");
 		o.append(groupId).append("_");
-		o.append(flowcell).append("_");
+		o.append(runName).append("_");
 		o.append(barcode).append("_");
 		o.append("L00").append(laneNum).append("_");
 		o.append("R").append(read).append("_");
