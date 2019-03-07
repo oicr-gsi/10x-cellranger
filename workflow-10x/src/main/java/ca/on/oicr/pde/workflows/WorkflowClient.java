@@ -95,10 +95,11 @@ public class WorkflowClient extends OicrWorkflow {
 		List<ProcessEvent> ls = ProcessEvent.parseLanesString(lanes);
 
 		final String lane = ls.stream().map(ProcessEvent::getLaneNumber).distinct().sorted().collect(Collectors.joining("_"));
+		final List<String> parents = ls.stream().filter(pe -> pe.getBarcode().equals("NoIndex")).map(ProcessEvent::getIusSwAccession).collect(Collectors.toList());
 
-		Job zipReportsJob = getZipJob(getFastqPath(flowcell) + "/Reports/html/", "Reports_" + runName + "_" + lane  + ".zip");
+		Job zipReportsJob = getZipJob(getFastqPath(flowcell) + "/Reports/html/", "Reports_" + runName + "_" + lane  + ".zip", parents);
 		zipReportsJob.setMaxMemory(packagerMemory).setQueue(queue);
-		Job zipStatsJob = getZipJob(getFastqPath(flowcell) + "/Stats/", "Stats_" + runName + "_" + lane  + ".zip");
+		Job zipStatsJob = getZipJob(getFastqPath(flowcell) + "/Stats/", "Stats_" + runName + "_" + lane  + ".zip", parents);
 		zipStatsJob.setMaxMemory(packagerMemory).setQueue(queue);
 
 		Job cellRangerJob = getCellRangerJob(ls);
@@ -175,7 +176,7 @@ public class WorkflowClient extends OicrWorkflow {
 
 	}
 
-	private Job getZipJob(String inputDirectoryPath, String outputFileName) {
+	private Job getZipJob(String inputDirectoryPath, String outputFileName, List<String> parentIUSes) {
 
 		String outputZipFilePath = inputDirectoryPath + "/" + outputFileName;
 
@@ -188,6 +189,7 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("."); // zip all files in current directory ("inputDirectoryPath")
 
 		SqwFile f = createOutputFile(outputZipFilePath, "application/zip-report-bundle", manualOutput);
+    f.setParentAccessions(parentIUSes);
 		job.addFile(f);
 
 		return job;
