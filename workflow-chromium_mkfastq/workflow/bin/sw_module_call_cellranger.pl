@@ -109,7 +109,7 @@ if ( -e $lockFile ) {
 }
 
 my $cmd =
-"$cellranger mkfastq --localcores=1 --localmem=$memory --run $run_folder --csv metadata_${flowcell}.csv";
+"$cellranger mkfastq --localcores=1 --localmem=$memory --ignore-dual-index --run $run_folder --csv metadata_${flowcell}.csv";
 if ( $usebasesmask && $usebasesmask ne "" ) {
     $cmd .= " --use-bases-mask $usebasesmask";
 }
