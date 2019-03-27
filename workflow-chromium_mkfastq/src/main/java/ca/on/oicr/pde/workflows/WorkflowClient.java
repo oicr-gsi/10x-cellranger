@@ -122,7 +122,8 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("--barcodes " + barcodes);
 		c.addArgument("--sheet-version " + sheetVersion);
 		c.addArgument("--bcl2fastqpath " + bcl2fastqpath);
-		c.addArgument("--memory " + (Integer.parseInt(memory) * 80 / 10240));
+		// We only give 80% of the memory to Cell Ranger to give it overhead for things like when the Python interpreter forks
+		c.addArgument("--memory " + (Integer.parseInt(memory) * 80 / 102400));
 		if (usebasesmask != null && !usebasesmask.isEmpty()) {
 			c.addArgument("--use-bases-mask " + usebasesmask);
 		}
