@@ -31,6 +31,8 @@ import ca.on.oicr.pde.utilities.workflows.OicrWorkflow;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.sourceforge.seqware.pipeline.workflowV2.model.Command;
 import net.sourceforge.seqware.pipeline.workflowV2.model.Job;
@@ -41,6 +43,7 @@ import net.sourceforge.seqware.pipeline.workflowV2.model.SqwFile;
  */
 public class WorkflowClient extends OicrWorkflow {
 
+	private static final Pattern PADDED_FLOW_CELL = Pattern.compile("0+-(.*)");
 	private String binDir;
 	private String swModuleCallCellRanger;
 	private String runFolder;
@@ -96,10 +99,11 @@ public class WorkflowClient extends OicrWorkflow {
 
 		final String lane = ls.stream().map(ProcessEvent::getLaneNumber).distinct().sorted().collect(Collectors.joining("_"));
 		final List<String> parents = ls.stream().filter(pe -> pe.getBarcode().equals("NoIndex")).map(ProcessEvent::getIusSwAccession).collect(Collectors.toList());
+		final String mangledFlowcell = mangleFlowcell(flowcell);
 
-		Job zipReportsJob = getZipJob(getFastqPath(flowcell) + "/Reports/html/", "Reports_" + runName + "_" + lane  + ".zip", parents);
+		Job zipReportsJob = getZipJob(getFastqPath(mangledFlowcell) + "/Reports/html/", "Reports_" + runName + "_" + lane  + ".zip", parents);
 		zipReportsJob.setMaxMemory(packagerMemory).setQueue(queue);
-		Job zipStatsJob = getZipJob(getFastqPath(flowcell) + "/Stats/", "Stats_" + runName + "_" + lane  + ".zip", parents);
+		Job zipStatsJob = getZipJob(getFastqPath(mangledFlowcell) + "/Stats/", "Stats_" + runName + "_" + lane  + ".zip", parents);
 		zipStatsJob.setMaxMemory(packagerMemory).setQueue(queue);
 
 		Job cellRangerJob = getCellRangerJob(ls);
@@ -215,8 +219,9 @@ public class WorkflowClient extends OicrWorkflow {
 	public static String getOutputPath(String flowcell, String laneNum, String iusSwAccession, String sampleName,
 			String barcode, String read, String groupId, int sampleSheetRowNumber) {
 		StringBuilder o = new StringBuilder();
-		o.append(getFastqPath(flowcell));
-		o.append(flowcell).append("/");
+		final String mangledFlowcell = mangleFlowcell(flowcell);
+		o.append(getFastqPath(mangledFlowcell));
+		o.append(mangledFlowcell).append("/");
 		o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
 				.append(flowcell).append("/");
 		o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
@@ -230,12 +235,17 @@ public class WorkflowClient extends OicrWorkflow {
 
 	public static String getUndeterminedFastqPath(String flowcell, String laneNum, String read) {
 		StringBuilder o = new StringBuilder();
-		o.append(getFastqPath(flowcell));
+		o.append(getFastqPath(mangleFlowcell(flowcell)));
 		o.append("Undetermined_S0_");
 		o.append("L00").append(laneNum).append("_");
 		o.append("R").append(read).append("_001.fastq.gz");
 
 		return o.toString();
+	}
+
+	public static String mangleFlowcell(String flowcell) {
+		final Matcher m = PADDED_FLOW_CELL.matcher(flowcell);
+		return m.matches() ? m.group(1) : flowcell;
 	}
 
 	public static String getFastqPath(String flowcell) {

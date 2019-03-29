@@ -39,6 +39,22 @@
                 "sample_sheet_version": "0",
                 "manual_output": "true"
             }
+        },
+        {
+          "id": "test_flowcell_name_mangling",
+          "description": "Test for cellranger's mangling of flowcell names",
+          "parameters": {
+            "memory": "104905",
+            "bcl2fastq_path": "/.mounts/labs/PDE/public/resources/bcl2fastq_2.20.0.422/usr/local/bin/",
+            "run_folder": "/oicr/data/archive/m146/190222_M00146_0016_000000000-D5VJ6",
+            "cellranger": "/oicr/local/analysis/sw-deb8/cellranger/cellranger-2.1.1/cellranger",
+            "flowcell": "000000000-D5VJ6",
+            "packager_memory": "3815",
+            "lanes": "1,NoIndex,0,,+1,SI-GA-D3,0,10XT_0016_Pb_P_PE_452_SC,+1,SI-GA-C7,0,10XT_0022_Pb_P_PE_485_SC",
+            "sample_sheet_version": "0",
+            "read_ends": "2",
+            "run_name": "190222_M00146_0016_000000000-D5VJ6"
+          }
         }
     ]
 }
