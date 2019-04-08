@@ -34,19 +34,19 @@ use Getopt::Long;
 # Script:  sw_module_call_cellranger.pl
 # Purpose: calls the Illumina tools for converting BCL files to FASTQ for one lane of sequencing.
 #
-#	* Means an argument is required
-# Input:	BASE CALLING
-#		--barcodes		  : *A "+" separated list of lanes, barcodes, accessions, sample names which are separated by comma.
-#								      Used in the Sample sheet and in the final file name
-#		--bcl2fastqpath	: *the path containing the bcl2fastq binary to use (must be named bcl2fastq)
-#		--cellranger    : *the path to cellranger binary
-#		--flowcell		  : *the name of the flowcell (sequencer run)
-#		--help                      : flag to print usage
-#		--lane			    : *the lane number to perform CellRanger on
-#		--usebasesmask	: *a bases mask to pass to CellRanger
-#	  --run-folder    : *a run folder from a sequencing run
+#  * Means an argument is required
+# Input:  BASE CALLING
+#    --barcodes        : *A "+" separated list of lanes, barcodes, accessions, sample names which are separated by comma.
+#                        Used in the Sample sheet and in the final file name
+#    --bcl2fastqpath    : *the path containing the bcl2fastq binary to use (must be named bcl2fastq)
+#    --cellranger      : *the path to cellranger binary
+#    --flowcell        : *the name of the flowcell (sequencer run)
+#    --help                      : flag to print usage
+#    --lane            : *the lane number to perform CellRanger on
+#    --use-bases-mask  : *a bases mask to pass to CellRanger
+#    --run-folder      : *a run folder from a sequencing run
 #
-# Output:  	a directory with the results from cellranger
+# Output:    a directory with the results from cellranger
 #
 ##########
 
@@ -59,15 +59,15 @@ my (
 $help = 0;
 my $argSize      = scalar(@ARGV);
 my $getOptResult = GetOptions(
-    'run-folder=s'    => \$run_folder,
-    'cellranger=s'    => \$cellranger,
-    'flowcell=s'      => \$flowcell,
-    'barcodes=s'      => \$barcodes,
-    'usebasesmask=s'  => \$usebasesmask,
-    'bcl2fastqpath=s' => \$bcl2fastqpath,
-    'sheet-version=i' => \$sample_sheet_version,
-    'memory=i'        => \$memory,
-    'help'            => \$help
+    'run-folder=s'     => \$run_folder,
+    'cellranger=s'     => \$cellranger,
+    'flowcell=s'       => \$flowcell,
+    'barcodes=s'       => \$barcodes,
+    'use-bases-mask=s' => \$usebasesmask,
+    'bcl2fastqpath=s'  => \$bcl2fastqpath,
+    'sheet-version=i'  => \$sample_sheet_version,
+    'memory=i'         => \$memory,
+    'help'             => \$help
 );
 usage() if ( !$getOptResult || $help );
 usage()
