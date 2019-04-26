@@ -53,8 +53,8 @@ use Getopt::Long;
 my (
     $run_folder,    $flowcell,             $lane,
     $barcodes,      $cellranger,           $usebasesmask,
-    $bcl2fastqpath, $sample_sheet_version, $memory,
-    $help
+    $bcl2fastqpath, $sample_sheet_version, $qc,
+    $memory,        $help
 );
 $help = 0;
 my $argSize      = scalar(@ARGV);
@@ -67,6 +67,7 @@ my $getOptResult = GetOptions(
     'bcl2fastqpath=s'  => \$bcl2fastqpath,
     'sheet-version=i'  => \$sample_sheet_version,
     'memory=i'         => \$memory,
+    'qc'               => \$qc,
     'help'             => \$help
 );
 usage() if ( !$getOptResult || $help );
@@ -110,6 +111,9 @@ if ( -e $lockFile ) {
 
 my $cmd =
 "$cellranger mkfastq --localcores=1 --localmem=$memory --ignore-dual-index --run $run_folder --csv metadata_${flowcell}.csv";
+if ($qc) {
+    $cmd .= " --qc";
+}
 if ( $usebasesmask && $usebasesmask ne "" ) {
     $cmd .= " --use-bases-mask $usebasesmask";
 }

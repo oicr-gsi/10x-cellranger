@@ -58,6 +58,7 @@ public class WorkflowClient extends OicrWorkflow {
 	private Integer readEnds;
 	private String usebasesmask;
 	private String bcl2fastqpath;
+	private boolean qc;
 	private boolean manualOutput;
 
 	private void WorkflowClient() {
@@ -76,6 +77,7 @@ public class WorkflowClient extends OicrWorkflow {
 		packagerMemory = getProperty("packager_memory");
 		queue = getOptionalProperty("queue", "");
 		usebasesmask = getOptionalProperty("use_bases_mask", "");
+		qc = Boolean.valueOf(getOptionalProperty("qc", "false"));
 		manualOutput = Boolean.valueOf(getOptionalProperty("manual_output", "false"));
 	}
 
@@ -110,6 +112,13 @@ public class WorkflowClient extends OicrWorkflow {
 		cellRangerJob.setMaxMemory(memory).setQueue(queue);
 		zipReportsJob.addParent(cellRangerJob);
 		zipStatsJob.addParent(cellRangerJob);
+
+		if (qc) {
+			final SqwFile json = createOutputFile(mangledFlowcell + "/outs/qc_summary.json", "qc_summary_" + runName + "_" + lane + ".json",
+				"application/json", manualOutput);
+			json.setParentAccessions(parents);
+			cellRangerJob.addFile(json);
+		 }
 	}
 
 	private Job getCellRangerJob(List<ProcessEvent> ps) {
@@ -128,6 +137,9 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("--bcl2fastqpath " + bcl2fastqpath);
 		// We only give 80% of the memory to Cell Ranger to give it overhead for things like when the Python interpreter forks
 		c.addArgument("--memory " + (Integer.parseInt(memory) * 80 / 102400));
+		if (qc) {
+			c.addArgument("--qc");
+		}
 		if (usebasesmask != null && !usebasesmask.isEmpty()) {
 			c.addArgument("--use-bases-mask " + usebasesmask);
 		}
@@ -177,6 +189,7 @@ public class WorkflowClient extends OicrWorkflow {
 			}
 		}
 
+
 		return job;
 
 	}
@@ -194,7 +207,7 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("."); // zip all files in current directory ("inputDirectoryPath")
 
 		SqwFile f = createOutputFile(outputZipFilePath, "application/zip-report-bundle", manualOutput);
-    f.setParentAccessions(parentIUSes);
+		f.setParentAccessions(parentIUSes);
 		job.addFile(f);
 
 		return job;

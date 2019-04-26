@@ -20,6 +20,7 @@
                 "memory": "110000",
                 "packager_memory": "4096",
                 "sample_sheet_version": "0",
+                "qc": "false",
                 "manual_output": "true"
             }
         },
@@ -37,6 +38,7 @@
                 "memory": "110000",
                 "packager_memory": "4096",
                 "sample_sheet_version": "0",
+                "qc": "true",
                 "manual_output": "true"
             }
         },
