@@ -28,9 +28,9 @@
 package ca.on.oicr.pde.workflows;
 
 import ca.on.oicr.pde.utilities.workflows.OicrWorkflow;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,6 +43,7 @@ import net.sourceforge.seqware.pipeline.workflowV2.model.SqwFile;
  */
 public class WorkflowClient extends OicrWorkflow {
 
+	private static final Predicate<String> IS_NUCLEOTIDES = Pattern.compile("^[ACGTacgt]*$").asPredicate();
 	private static final Pattern PADDED_FLOW_CELL = Pattern.compile("0+-(.*)");
 	private String binDir;
 	private String swModuleCallCellRanger;
@@ -122,6 +123,8 @@ public class WorkflowClient extends OicrWorkflow {
 	}
 
 	private Job getCellRangerJob(List<ProcessEvent> ps) {
+		// Sort the barcodes so that nucleotide barcodes get sorted first. If not done, their S numbers are weird and annoying to figure out.
+		ps.sort(Comparator.comparingInt(pe -> IS_NUCLEOTIDES.test(pe.getBarcode()) ? 0 : 1));
 
 		String barcodes = ProcessEvent.getBarcodesStringFromProcessEventList(ps);
 
@@ -235,8 +238,10 @@ public class WorkflowClient extends OicrWorkflow {
 		final String mangledFlowcell = mangleFlowcell(flowcell);
 		o.append(getFastqPath(mangledFlowcell));
 		o.append(mangledFlowcell).append("/");
-		o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
-				.append(flowcell).append("/");
+		if (!IS_NUCLEOTIDES.test(barcode)) {
+			o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
+					.append(flowcell).append("/");
+		}
 		o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
 				.append(flowcell).append("_");
 		o.append("S").append(sampleSheetRowNumber).append("_");
