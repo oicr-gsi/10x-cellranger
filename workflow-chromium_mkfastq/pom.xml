@@ -14,7 +14,7 @@
   <name>${display-name}</name>
   <properties>
     <workflow-name>chromium_mkfastq</workflow-name>
-    <bcl2fastqpath>/.mounts/labs/PDE/public/resources/bcl2fastq_2.20.0.422/usr/local/bin/</bcl2fastqpath>
+    <bcl2fastqpath>/.mounts/labs/PDE/public/software/bcl2fastq_2.20.0.422/usr/local/bin/</bcl2fastqpath>
     <cellranger-bin>/oicr/local/analysis/sw-deb8/cellranger/cellranger-2.1.1/cellranger</cellranger-bin>
   </properties>
   <dependencies>
