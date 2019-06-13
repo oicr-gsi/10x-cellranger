@@ -30,7 +30,6 @@ package ca.on.oicr.pde.workflows;
 import ca.on.oicr.pde.utilities.workflows.OicrWorkflow;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,7 +42,6 @@ import net.sourceforge.seqware.pipeline.workflowV2.model.SqwFile;
  */
 public class WorkflowClient extends OicrWorkflow {
 
-	private static final Predicate<String> IS_NUCLEOTIDES = Pattern.compile("^[ACGTacgt]*$").asPredicate();
 	private static final Pattern PADDED_FLOW_CELL = Pattern.compile("0+-(.*)");
 	private String binDir;
 	private String swModuleCallCellRanger;
@@ -123,9 +121,6 @@ public class WorkflowClient extends OicrWorkflow {
 	}
 
 	private Job getCellRangerJob(List<ProcessEvent> ps) {
-		// Sort the barcodes so that nucleotide barcodes get sorted first. If not done, their S numbers are weird and annoying to figure out.
-		ps.sort(Comparator.comparingInt(pe -> IS_NUCLEOTIDES.test(pe.getBarcode()) ? 0 : 1));
-
 		String barcodes = ProcessEvent.getBarcodesStringFromProcessEventList(ps);
 
 		// NOTE: newJob adds autoincrement counter to job name
@@ -135,6 +130,7 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("--run-folder " + runFolder);
 		c.addArgument("--cellranger " + cellranger);
 		c.addArgument("--flowcell " + flowcell);
+		c.addArgument("--outdir " + getFastqPath(mangleFlowcell( flowcell)));
 		c.addArgument("--barcodes " + barcodes);
 		c.addArgument("--sheet-version " + sheetVersion);
 		c.addArgument("--bcl2fastqpath " + bcl2fastqpath);
@@ -152,7 +148,6 @@ public class WorkflowClient extends OicrWorkflow {
 		c.addArgument("2>stderr.log");
 
 		// for each sample sheet entry, provision out the associated fastq(s).
-		int sampleSheetRowNumber = 1;
 		for (ProcessEvent p : ps) {
 			if (p.getBarcode().equals("NoIndex")) {
 				SqwFile r1 = createOutputFile(getUndeterminedFastqPath(flowcell, p.getLaneNumber(), "1"),
@@ -170,7 +165,7 @@ public class WorkflowClient extends OicrWorkflow {
 			} else {
 				SqwFile r1 = createOutputFile(
 						getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
-								p.getBarcode(), "1", p.getGroupId(), sampleSheetRowNumber),
+								"1", p.getGroupId()),
 						generateOutputFilename(runName, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
 								p.getBarcode(), "1", p.getGroupId()),
 						"chemical/seq-na-fastq-gzip", manualOutput);
@@ -180,15 +175,13 @@ public class WorkflowClient extends OicrWorkflow {
 				if (readEnds > 1) {
 					SqwFile r2 = createOutputFile(
 							getOutputPath(flowcell, p.getLaneNumber(), p.getIusSwAccession(), p.getSampleName(),
-									p.getBarcode(), "2", p.getGroupId(), sampleSheetRowNumber),
+									"2", p.getGroupId()),
 							generateOutputFilename(runName, p.getLaneNumber(), p.getIusSwAccession(),
 									p.getSampleName(), p.getBarcode(), "2", p.getGroupId()),
 							"chemical/seq-na-fastq-gzip", manualOutput);
 					r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
 					job.addFile(r2);
 				}
-
-				sampleSheetRowNumber++;
 			}
 		}
 
@@ -233,18 +226,12 @@ public class WorkflowClient extends OicrWorkflow {
 	}
 
 	public static String getOutputPath(String flowcell, String laneNum, String iusSwAccession, String sampleName,
-			String barcode, String read, String groupId, int sampleSheetRowNumber) {
+									   String read, String groupId) {
 		StringBuilder o = new StringBuilder();
 		final String mangledFlowcell = mangleFlowcell(flowcell);
 		o.append(getFastqPath(mangledFlowcell));
-		o.append(mangledFlowcell).append("/");
-		if (!IS_NUCLEOTIDES.test(barcode)) {
-			o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
-					.append(flowcell).append("/");
-		}
 		o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_")
 				.append(flowcell).append("_");
-		o.append("S").append(sampleSheetRowNumber).append("_");
 		o.append("L00").append(laneNum).append("_");
 		o.append("R").append(read).append("_001.fastq.gz");
 

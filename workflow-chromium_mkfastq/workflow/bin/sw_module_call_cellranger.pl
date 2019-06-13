@@ -1,5 +1,8 @@
 use strict;
+use Cwd;
 use Data::Dumper;
+use File::Copy;
+use File::Find;
 use Getopt::Long;
 
 ###
@@ -50,12 +53,8 @@ use Getopt::Long;
 #
 ##########
 
-my (
-    $run_folder,    $flowcell,             $lane,
-    $barcodes,      $cellranger,           $usebasesmask,
-    $bcl2fastqpath, $sample_sheet_version, $qc,
-    $memory,        $help
-);
+my ( $run_folder, $flowcell, $lane, $barcodes, $cellranger, $usebasesmask,
+    $bcl2fastqpath, $sample_sheet_version, $qc, $outdir, $memory, $help );
 $help = 0;
 my $argSize      = scalar(@ARGV);
 my $getOptResult = GetOptions(
@@ -65,6 +64,7 @@ my $getOptResult = GetOptions(
     'barcodes=s'       => \$barcodes,
     'use-bases-mask=s' => \$usebasesmask,
     'bcl2fastqpath=s'  => \$bcl2fastqpath,
+    'outdir=s'         => \$outdir,
     'sheet-version=i'  => \$sample_sheet_version,
     'memory=i'         => \$memory,
     'qc'               => \$qc,
@@ -121,6 +121,26 @@ print "Running: $cmd\n";
 $ENV{'PATH'} = $ENV{'PATH'} . ":" . $bcl2fastqpath;
 my $result = system($cmd);
 if ( $result != 0 ) { print "Errors! exit code: $result\n"; exit(1); }
+
+my @dirs = ($outdir);
+my %moves;
+File::Find::find(
+    sub {
+        if ( $_ =~ /^(SWID_.*)_S\d+(.*\.fastq.gz)/ ) {
+            $moves{$File::Find::name} = $outdir . $1 . $2;
+        }
+    },
+    @dirs
+);
+
+my $cwd = cwd();
+print "Current directory is $cwd\n";
+foreach my $src ( keys %moves ) {
+    my $dest = $moves{$src};
+    print "Renaming $src to $dest\n";
+    rename( $src, $dest )
+      or die "Move failed: $!";
+}
 
 exit(0);
 

@@ -91,8 +91,8 @@ public class WorkflowClientTest {
 	@Test
 	public void testGetOutputPath() {
 
-		String expected = "110916_SN804_0064_AD04TBACXX/outs/fastq_path/110916_SN804_0064_AD04TBACXX/SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX/"
-				+ "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_S1_L001_R1_001.fastq.gz";
+		String expected = "110916_SN804_0064_AD04TBACXX/outs/fastq_path/"
+				+ "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_L001_R1_001.fastq.gz";
 
 		String flowcell = "110916_SN804_0064_AD04TBACXX";
 		String laneNum = "1";
@@ -101,10 +101,9 @@ public class WorkflowClientTest {
 		String barcode = "NoIndex";
 		String read = "1";
 		String groupId = "NoGroup";
-		int sampleSheetRowNumber = 1;
 
-		String actual = WorkflowClient.getOutputPath(flowcell, laneNum, iusSwAccession, sampleName, barcode, read,
-				groupId, sampleSheetRowNumber);
+		String actual = WorkflowClient.getOutputPath(flowcell, laneNum, iusSwAccession, sampleName, read,
+				groupId);
 		Assert.assertEquals(actual, expected);
 
 	}
