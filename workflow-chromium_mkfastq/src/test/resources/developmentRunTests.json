@@ -63,7 +63,7 @@
           "description": "Test for cellranger's handling of symbolic and nucleotide names",
           "parameters": {
             "memory": "104905",
-            "bcl2fastq_path": "/.mounts/labs/PDE/public/resources/bcl2fastq_2.20.0.422/usr/local/bin/",
+            "bcl2fastq_path": "/.mounts/labs/PDE/public/software/bcl2fastq_2.20.0.422/usr/local/bin/",
             "run_folder": "/oicr/data/archive/A00469/190529_A00469_0039_BH77HKDRXX",
             "cellranger": "/oicr/local/analysis/sw-deb8/cellranger/cellranger-2.1.1/cellranger",
             "flowcell": "H77HKDRXX",
