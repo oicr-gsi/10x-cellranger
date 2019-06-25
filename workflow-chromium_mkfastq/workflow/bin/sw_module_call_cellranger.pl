@@ -53,11 +53,18 @@ use Getopt::Long;
 #
 ##########
 
-my ( $run_folder, $flowcell, $lane, $barcodes, $cellranger, $usebasesmask,
-    $bcl2fastqpath, $sample_sheet_version, $qc, $outdir, $memory, $help );
-$help = 0;
+my (
+    $run_folder,    $flowcell,             $lane,
+    $barcodes,      $cellranger,           $usebasesmask,
+    $bcl2fastqpath, $sample_sheet_version, $qc,
+    $outdir,        $memory,               $help,
+    $extra_args
+);
+$help       = 0;
+$extra_args = "";
 my $argSize      = scalar(@ARGV);
 my $getOptResult = GetOptions(
+    'extra-args=s'     => \$extra_args,
     'run-folder=s'     => \$run_folder,
     'cellranger=s'     => \$cellranger,
     'flowcell=s'       => \$flowcell,
@@ -110,7 +117,7 @@ if ( -e $lockFile ) {
 }
 
 my $cmd =
-"$cellranger mkfastq --localcores=1 --localmem=$memory --ignore-dual-index --run $run_folder --csv metadata_${flowcell}.csv";
+"$cellranger mkfastq --localcores=1 --localmem=$memory $extra_args --ignore-dual-index --run $run_folder --csv metadata_${flowcell}.csv";
 if ($qc) {
     $cmd .= " --qc";
 }

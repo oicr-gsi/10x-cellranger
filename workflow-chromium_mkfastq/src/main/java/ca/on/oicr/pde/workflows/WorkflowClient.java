@@ -45,6 +45,7 @@ public class WorkflowClient extends OicrWorkflow {
 	private static final Pattern PADDED_FLOW_CELL = Pattern.compile("0+-(.*)");
 	private String binDir;
 	private String swModuleCallCellRanger;
+    private String extraArgs;
 	private String runFolder;
 	private String flowcell;
 	private String lanes;
@@ -65,6 +66,7 @@ public class WorkflowClient extends OicrWorkflow {
 		binDir = getWorkflowBaseDir() + "/bin/";
 		bcl2fastqpath = getProperty("bcl2fastq_path");
 		swModuleCallCellRanger = binDir + "sw_module_call_cellranger.pl";
+		extraArgs = getOptionalProperty("extra_args", "");
 		runFolder = getProperty("run_folder");
 		flowcell = getProperty("flowcell");
 		readEnds = Integer.parseInt(getProperty("read_ends"));
@@ -141,6 +143,9 @@ public class WorkflowClient extends OicrWorkflow {
 		}
 		if (usebasesmask != null && !usebasesmask.isEmpty()) {
 			c.addArgument("--use-bases-mask " + usebasesmask);
+		}
+		if (!extraArgs.isEmpty()) {
+			c.addArgument("--extra-args '" + extraArgs.replace("'", "'\\''") + "'");
 		}
 
 		// Temporary workaround until https://jira.oicr.on.ca/browse/SEQWARE-1895 is
